@@ -14,7 +14,6 @@ import Announcement from "@components/molecules/Announcement.astro";
 import Calendar from "@components/molecules/Calendar.astro";
 import Categories from "@components/molecules/Categories.astro";
 import Series from "@components/molecules/Series.astro";
-import SidebarLinks from "@components/molecules/SidebarLinks.astro";
 import SidebarTOC from "@components/molecules/SidebarTOC.astro";
 import SiteStats from "@components/molecules/SiteStats.astro";
 import Tags from "@components/molecules/Tags.astro";
@@ -70,7 +69,6 @@ const MusicSidebar =
 // widget 类型 → 组件（键必须覆盖 SidebarWidget 的全部 type）
 const componentMap = {
 	profile: Profile,
-	links: SidebarLinks,
 	categories: Categories,
 	tags: Tags,
 	series: Series,

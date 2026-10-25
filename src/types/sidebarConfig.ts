@@ -145,28 +145,6 @@ export interface MusicWidget {
 	pages?: SidebarPage[];
 }
 
-/**
- * 自定义链接列表（站内/站外入口，如「动态」）。
- * items 顺序即展示顺序；url 以 / 开头视为站内链接，交给 url() 统一加 base。
- */
-export interface LinksWidget {
-	type: "links";
-	enable: boolean;
-	slot: SidebarWidgetSlot;
-	column?: SidebarColumn;
-	pages?: SidebarPage[];
-	/** 卡片标题；省略时用 i18n 的「链接」 */
-	title?: string;
-	items: {
-		name: string;
-		url: string;
-		/** Iconify 图标名，省略则只显示文字 */
-		icon?: string;
-		/** 外部链接：新开标签页并加 rel */
-		external?: boolean;
-	}[];
-}
-
 export type SidebarWidget =
 	| ProfileWidget
 	| CategoriesWidget
@@ -176,8 +154,7 @@ export type SidebarWidget =
 	| StatsWidget
 	| CalendarWidget
 	| TocWidget
-	| MusicWidget
-	| LinksWidget;
+	| MusicWidget;
 
 /**
  * 侧栏整体配置。components 渲染顺序 = 数组顺序，top 恒排在 sticky 之前。
