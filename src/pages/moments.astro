@@ -7,7 +7,7 @@ import { resolveImageAsset } from "@utils/asset-utils";
 import { getSortedMoments } from "@utils/content-utils";
 import { resolveI18nText } from "@utils/i18n-utils";
 import { url } from "@utils/url-utils";
-import { momentsConfig, profileConfig } from "@/config";
+import { memosConfig, momentsConfig, profileConfig, resolveMemosOptions } from "@/config";
 
 if (!momentsConfig.enable) {
 	return Astro.redirect("/404/");
@@ -20,6 +20,8 @@ const pageDescription = resolveI18nText(
 );
 
 const moments = await getSortedMoments();
+/** 配置了 Memos 时改由客户端拉取，本地条目作为失败时的兜底 */
+const memosRemote = resolveMemosOptions(memosConfig);
 const avatarAsset = await resolveImageAsset(profileConfig.avatar ?? "");
 let avatar = typeof avatarAsset === "string" ? avatarAsset : avatarAsset.src;
 let avatarSrcset: string | undefined;
@@ -55,5 +57,5 @@ const author = {
 ---
 
 <MainGridLayout title={pageTitle} description={pageDescription} page="moments">
-    <MomentSection {moments} {author} title={pageTitle} subtitle={pageDescription} client:visible></MomentSection>
+    <MomentSection {moments} {author} title={pageTitle} subtitle={pageDescription} remote={memosRemote} client:visible></MomentSection>
 </MainGridLayout>

@@ -30,6 +30,7 @@ export {
 	resolveCommentOptions,
 } from "./commentConfig";
 export { compassConfig } from "./compassConfig";
+export { memosConfig, resolveMemosOptions } from "./memosConfig";
 export { contextMenuConfig } from "./contextMenuConfig";
 export { devicesConfig } from "./devicesConfig";
 export { expressiveCodeConfig } from "./expressiveCodeConfig";

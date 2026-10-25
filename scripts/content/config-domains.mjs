@@ -183,6 +183,12 @@ export const CONFIG_DOMAINS = Object.freeze([
 		module: "@/types/momentsConfig",
 	},
 	{
+		key: "memos",
+		file: "memos",
+		type: "MemosConfig",
+		module: "@/types/memosConfig",
+	},
+	{
 		key: "albums",
 		file: "albums",
 		type: "AlbumsConfig",

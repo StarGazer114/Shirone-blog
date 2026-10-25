@@ -16,8 +16,10 @@ import MomentCard, {
 import PageHeader from "@components/molecules/PageHeader.svelte";
 import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
+import type { ResolvedMemosOptions } from "@/types/memosConfig";
 import type { MomentItem } from "@utils/content-utils";
 import { initFancybox } from "@utils/fancybox-handler";
+import { fetchMemosMoments } from "@utils/memos-utils";
 import { onMount } from "svelte";
 
 let {
@@ -25,12 +27,38 @@ let {
 	author = { name: "", avatar: "", url: "/about/" } as MomentAuthor,
 	title = i18n(I18nKey.moments),
 	subtitle = i18n(I18nKey.momentsBanner),
+	/** 配置后改用运行时拉取 Memos；为 null 时沿用构建期本地快照 */
+	remote = null as ResolvedMemosOptions | null,
 }: {
 	moments?: MomentItem[];
 	author?: MomentAuthor;
 	title?: string;
 	subtitle?: string;
+	remote?: ResolvedMemosOptions | null;
 } = $props();
+
+/** 列表数据源：默认是构建期传入的本地快照，Memos 拉取成功后替换 */
+let items = $state<MomentItem[]>(moments);
+let remoteLoading = $state(false);
+let remoteError = $state(false);
+let remoteRequest: AbortController | undefined;
+
+async function loadRemoteMoments() {
+	if (!remote) return;
+	remoteLoading = true;
+	remoteError = false;
+	remoteRequest = new AbortController();
+	try {
+		items = await fetchMemosMoments(remote, remoteRequest.signal);
+	} catch (error) {
+		if (remoteRequest.signal.aborted) return;
+		remoteError = true;
+		console.error("Failed to load Memos moments:", error);
+		if (!remote.fallbackToLocal) items = [];
+	} finally {
+		remoteLoading = false;
+	}
+}
 
 const MOMENTS_PAGE_SIZE = 10;
 
@@ -44,7 +72,7 @@ let phase = $state<FilterPhase>("idle");
 let phaseTimers: ReturnType<typeof setTimeout>[] = [];
 
 const tagItems = $derived(
-	Array.from(new Set(moments.flatMap((moment) => moment.tags)))
+	Array.from(new Set(items.flatMap((moment) => moment.tags)))
 		.sort((a, b) => a.localeCompare(b))
 		.map((tag) => ({ value: tag, label: tag })),
 );
@@ -52,7 +80,7 @@ const tagItems = $derived(
 /** HTML → 纯文本（搜索用），构建一次避免每键重复解析 */
 const searchTexts = $derived.by(() => {
 	const map = new Map<string, string>();
-	for (const moment of moments) {
+	for (const moment of items) {
 		const plain = moment.html.replace(/<[^>]+>/g, " ");
 		map.set(
 			moment.id,
@@ -65,7 +93,7 @@ const searchTexts = $derived.by(() => {
 const filtered = $derived.by(() => {
 	const normalizedQuery = query.trim().toLowerCase();
 
-	return moments.filter((moment) => {
+	return items.filter((moment) => {
 		if (selectedTag && !moment.tags.includes(selectedTag)) return false;
 		if (!normalizedQuery) return true;
 		return (searchTexts.get(moment.id) ?? "").includes(normalizedQuery);
@@ -122,7 +150,11 @@ onMount(() => {
 	initialized = true;
 	// 图片灯箱：client:only 岛挂载晚于全局 init，此处确保 [data-fancybox] 已绑定
 	initFancybox();
-	return () => phaseTimers.forEach(clearTimeout);
+	void loadRemoteMoments();
+	return () => {
+		phaseTimers.forEach(clearTimeout);
+		remoteRequest?.abort();
+	};
 });
 </script>
 
@@ -133,7 +165,7 @@ onMount(() => {
 		{subtitle}
 	/>
 
-	{#if moments.length > 0}
+	{#if items.length > 0}
 		<div class="moment-section__tools">
 			<div class="moment-section__search">
 				<TextField
@@ -183,6 +215,10 @@ onMount(() => {
 		>
 			<LoadingIndicator contained size={64} />
 		</div>
+	{:else if remoteLoading}
+		<div class="moment-section__loading">
+			<LoadingIndicator contained size={64} />
+		</div>
 	{:else if visibleMoments.length > 0}
 		{#key `${query}|${selectedTag}`}
 			<div class="moment-section__list">
@@ -203,7 +239,12 @@ onMount(() => {
 		{/if}
 	{:else}
 		<div class="moment-section__empty">
-			<Icon icon="material-symbols:search-off-outline-rounded" aria-hidden="true" />
+			<Icon
+				icon={remoteError
+					? "material-symbols:cloud-off-outline-rounded"
+					: "material-symbols:search-off-outline-rounded"}
+				aria-hidden="true"
+			/>
 			<span>{i18n(I18nKey.momentsNoResults)}</span>
 		</div>
 	{/if}
