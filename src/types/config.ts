@@ -42,6 +42,11 @@ export type BannerConfig = {
 	homeText: {
 		enable: boolean;
 		title: string;
+		/**
+		 * 副标题远程 API：返回 JSON 字符串数组（或 {"text": "..."}）。
+		 * 配置后运行时拉取并替换 subtitle 的静态文案，失败静默回退。
+		 */
+		apiUrl?: string;
 		/** 首页副标题文本，支持单条字符串或多条交替循环的字符串数组 */
 		subtitle: string | string[];
 		typewriter: {

@@ -188,6 +188,7 @@ const initialMobileBanner = page === "home";
 	data-position={siteConfig.banner.position ?? "center"}
 	data-home-title={siteConfig.banner.homeText.title}
 	data-home-subtitles={JSON.stringify(subtitleArray)}
+	data-home-api-url={siteConfig.banner.homeText.apiUrl ?? ""}
 	data-subtitle-typewriter-enabled={String(typewriter.enable)}
 	data-subtitle-typewriter-loop={String(typewriter.loop)}
 	data-subtitle-typewriter-speed={String(Math.max(typewriter.speed, 1))}
@@ -408,7 +409,50 @@ const initialMobileBanner = page === "home";
 		return Array.from(value);
 	}
 
+	/** 远程 API 拉取到的副标题；非空时优先于 data-home-subtitles 的静态文案 */
+	let remoteSubtitles: string[] = [];
+	/** 每个页面生命周期只请求一次（Swup 站内导航复用同一实例） */
+	let subtitleApiRequested = false;
+
+	async function loadRemoteSubtitles(url: string) {
+		const controller = new AbortController();
+		const timer = window.setTimeout(() => controller.abort(), 8000);
+		try {
+			const response = await fetch(url, {
+				signal: controller.signal,
+				credentials: "omit",
+				headers: { Accept: "application/json" },
+			});
+			if (!response.ok) throw new Error(`HTTP ${response.status}`);
+			const data: unknown = await response.json();
+			const list = Array.isArray(data)
+				? data
+				: data &&
+						typeof data === "object" &&
+						typeof (data as { text?: unknown }).text === "string"
+					? [(data as { text: string }).text]
+					: [];
+			const cleaned = list
+				.map((item) => String(item).trim())
+				.filter(Boolean)
+				.slice(0, 20);
+			if (!cleaned.length) throw new Error("empty payload");
+			remoteSubtitles = cleaned;
+			// 新文案就位后重启打字机（清掉页面缓存态，避免被早退逻辑跳过）
+			runtime.subtitlePage = null;
+			const currentPage = (document.body.dataset.currentPage ||
+				"home") as SidebarPage;
+			startSubtitleTyping(currentPage);
+		} catch (error) {
+			// 静默降级：继续使用静态 subtitle 数组
+			console.warn("Failed to load banner subtitles:", error);
+		} finally {
+			window.clearTimeout(timer);
+		}
+	}
+
 	function getSubtitleTexts(): string[] {
+		if (remoteSubtitles.length > 0) return remoteSubtitles;
 		try {
 			const parsed = JSON.parse(stage?.dataset.homeSubtitles || "[]");
 			if (Array.isArray(parsed) && parsed.length > 0) {
@@ -975,6 +1019,11 @@ const initialMobileBanner = page === "home";
 
 	if (stage) {
 		syncBanner();
+		const subtitleApiUrl = stage.dataset.homeApiUrl?.trim() || "";
+		if (subtitleApiUrl && !subtitleApiRequested) {
+			subtitleApiRequested = true;
+			void loadRemoteSubtitles(subtitleApiUrl);
+		}
 		if (!window.__shironeBannerBound) {
 			window.__shironeBannerBound = true;
 			window.addEventListener(WALLPAPER_MODE_CHANGE_EVENT, () => syncBanner());
