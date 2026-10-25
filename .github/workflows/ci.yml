@@ -21,6 +21,9 @@ jobs:
     timeout-minutes: 10
     env:
       CI: true
+      # 双仓模式：CI 从公开内容仓拉取文章与配置
+      CONTENT_REPO_URL: https://github.com/StarGazer114/Shirone-content.git
+      CONTENT_REPO_REF: main
 
     steps:
       - name: Checkout
@@ -52,6 +55,9 @@ jobs:
     timeout-minutes: 15
     env:
       CI: true
+      # 双仓模式：CI 从公开内容仓拉取文章与配置
+      CONTENT_REPO_URL: https://github.com/StarGazer114/Shirone-content.git
+      CONTENT_REPO_REF: main
 
     steps:
       - name: Checkout
@@ -95,6 +101,9 @@ jobs:
         node: [22, 24]
     env:
       CI: true
+      # 双仓模式：CI 从公开内容仓拉取文章与配置
+      CONTENT_REPO_URL: https://github.com/StarGazer114/Shirone-content.git
+      CONTENT_REPO_REF: main
 
     steps:
       - name: Checkout
@@ -125,6 +134,9 @@ jobs:
     timeout-minutes: 20
     env:
       CI: true
+      # 双仓模式：CI 从公开内容仓拉取文章与配置
+      CONTENT_REPO_URL: https://github.com/StarGazer114/Shirone-content.git
+      CONTENT_REPO_REF: main
 
     steps:
       - name: Checkout
@@ -175,6 +187,9 @@ jobs:
     timeout-minutes: 15
     env:
       CI: true
+      # 双仓模式：CI 从公开内容仓拉取文章与配置
+      CONTENT_REPO_URL: https://github.com/StarGazer114/Shirone-content.git
+      CONTENT_REPO_REF: main
 
     steps:
       - name: Checkout
