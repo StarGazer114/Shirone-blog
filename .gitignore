@@ -77,3 +77,11 @@ artifacts/lighthouse/*
 
 # generated AI skills plugin packages
 artifacts/shirone-ai-*
+
+# content separation: 内容仓同步产物（真源在 ~/shirone-content）
+/src/content/
+/src/data/
+/src/assets/images/
+/src/assets/fonts/
+/src/user/user-config.ts
+/public/images/
